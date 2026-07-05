@@ -1,0 +1,13 @@
+flask
+werkzeug
+pypdf
+python-docx
+sentence-transformers
+torch
+scikit-learn
+numpy
+pandas
+reportlab
+openpyxl
+gunicorn
+python-dotenv

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ranking Result</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="page">
+    <nav class="navbar">
+        <div class="brand">AI Resume Ranking Engine</div>
+        <div class="nav-links">
+            <a href="/">New Ranking</a>
+            <a href="/history">History</a>
+        </div>
+    </nav>
+
+    <section class="result-head">
+        <div>
+            <p class="tag">Ranking Completed</p>
+            <h1>{{ result.job_title }}</h1>
+            <p>Total resumes ranked: <b>{{ result.total }}</b></p>
+            <p>Ranking method: <b>{{ result.method }}</b></p>
+            <p>SBERT: <b>{{ result.deep_learning_used }}</b> | FAISS: <b>{{ result.faiss_used }}</b> | CrossEncoder: <b>{{ result.cross_encoder_used }}</b></p>
+        </div>
+        <div class="download-actions">
+            <a href="{{ url_for('main.download_file', file_type='csv', filename=result.csv_filename) }}">Download CSV</a>
+            <a href="{{ url_for('main.download_file', file_type='pdf', filename=result.pdf_filename) }}">Download PDF</a>
+            <a href="{{ url_for('main.download_file', file_type='zip', filename=result.zip_filename) }}">Download Sorted Resume ZIP</a>
+        </div>
+    </section>
+
+    {% if result.errors %}
+    <section class="panel warning-box">
+        <h2>Warnings / Skipped Files</h2>
+        <ul>
+            {% for err in result.errors[:10] %}
+            <li>{{ err }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+
+    <section class="metrics-grid">
+        <div class="metric"><span>Total Resumes</span><h2>{{ result.analytics.total }}</h2></div>
+        <div class="metric"><span>Average Score</span><h2>{{ result.analytics.average_score }}</h2></div>
+        <div class="metric"><span>Top Score</span><h2>{{ result.analytics.highest_score }}</h2></div>
+        <div class="metric"><span>Strong Hire</span><h2>{{ result.analytics.strong_hire }}</h2></div>
+        <div class="metric"><span>Hire</span><h2>{{ result.analytics.hire }}</h2></div>
+        <div class="metric"><span>Consider</span><h2>{{ result.analytics.consider }}</h2></div>
+        <div class="metric"><span>Weak Match</span><h2>{{ result.analytics.weak_match }}</h2></div>
+        <div class="metric"><span>Reject</span><h2>{{ result.analytics.reject }}</h2></div>
+        <div class="metric"><span>DL Mode</span><h2>{{ "ON" if result.deep_learning_used else "Fallback" }}</h2></div>
+    </section>
+
+    <section class="panel">
+        <h2>Recruiter Analytics</h2>
+        <div class="analytics-grid">
+            <div>
+                <h3>Score Distribution</h3>
+                {% for bucket, count in result.analytics.score_buckets.items() %}
+                <div class="bar-row">
+                    <span>{{ bucket }}</span>
+                    <div class="score-track"><div class="score-fill" style="width: {{ (count / result.analytics.total * 100) if result.analytics.total else 0 }}%"></div></div>
+                    <b>{{ count }}</b>
+                </div>
+                {% endfor %}
+            </div>
+            <div>
+                <h3>Top Matched Skills</h3>
+                <div class="chips">
+                    {% for skill, count in result.analytics.top_skills %}
+                    <span>{{ skill }} ({{ count }})</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Top 10 Best Matching Resumes</h2>
+        <div class="cards">
+            {% for r in result.resumes[:10] %}
+            <div class="candidate-card">
+                <div class="rank">#{{ loop.index }}</div>
+                <div class="candidate-main">
+                    <div class="candidate-top">
+                        <div>
+                            <h3>{{ r.candidate_name }}</h3>
+                            <p>{{ r.filename }}</p>
+                        </div>
+                        <div class="recommendation {{ r.recommendation|lower|replace(' ', '-') }}">{{ r.recommendation }}</div>
+                    </div>
+
+                    <div class="score-track"><div class="score-fill" style="width: {{ r.final_score }}%"></div></div>
+                    <div class="score-line">
+                        <span>Final Score: <b>{{ r.final_score }}</b></span>
+                        <span>SBERT/JD: {{ r.semantic_score }}</span>
+                        <span>Weighted Skills: {{ r.skill_score }}</span>
+                        {% if r.cross_encoder_score %}<span>CrossEncoder: {{ r.cross_encoder_score }}</span>{% endif %}
+                    </div>
+
+                    <div class="explain-box">
+                        <h4>Why Ranked Here</h4>
+                        <ul>
+                            {% for reason in r.explanation.why_ranked %}
+                            <li>{{ reason }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <h4>Matched Skills</h4>
+                    <div class="chips">{% for s in r.matched_skills[:10] %}<span>{{ s }}</span>{% endfor %}</div>
+
+                    <h4>Critical Missing Skills</h4>
+                    <div class="chips missing">{% for s in r.explanation.critical_missing[:8] %}<span>{{ s }}</span>{% endfor %}</div>
+
+                    <a class="mini-btn" href="{{ url_for('main.download_resume', filename=r.filename) }}">Download Resume</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Full Ranking Table</h2>
+        <input class="search-box" id="searchBox" placeholder="Search candidate, skill, recommendation..." onkeyup="filterTable()">
+        <div class="table-wrap">
+            <table id="rankingTable">
+                <tr>
+                    <th>Rank</th><th>Candidate</th><th>File</th><th>Score</th><th>Recommendation</th><th>Email</th><th>Matched Skills</th><th>Missing Skills</th><th>Resume</th>
+                </tr>
+                {% for r in result.resumes %}
+                <tr>
+                    <td>{{ loop.index }}</td><td>{{ r.candidate_name }}</td><td>{{ r.filename }}</td><td><b>{{ r.final_score }}</b></td><td>{{ r.recommendation }}</td><td>{{ r.email }}</td><td>{{ ", ".join(r.matched_skills[:10]) }}</td><td>{{ ", ".join(r.missing_skills[:10]) }}</td><td><a class="table-link" href="{{ url_for('main.download_resume', filename=r.filename) }}">Download</a></td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </section>
+</div>
+
+<script>
+function filterTable() {
+    const input = document.getElementById("searchBox").value.toLowerCase();
+    const rows = document.querySelectorAll("#rankingTable tr");
+    rows.forEach((row, index) => {
+        if (index === 0) return;
+        row.style.display = row.innerText.toLowerCase().includes(input) ? "" : "none";
+    });
+}
+</script>
+</body>
+</html>

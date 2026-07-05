@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Resume Ranking Engine</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="page">
+    <nav class="navbar">
+        <div class="brand">AI Resume Ranking Engine</div>
+        <div class="nav-links">
+            <a href="/">Dashboard</a>
+            <a href="/history">History</a>
+            <a href="/api/health">API</a>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div>
+            <p class="tag">Recruiter AI System</p>
+            <h1>Rank 1K+ resumes against one Job Description</h1>
+            <p class="sub">Paste a JD, upload bulk resumes, and get the best candidates ranked automatically with scores, skill gaps and downloadable reports.</p>
+        </div>
+        <div class="hero-stats">
+            <div><h2>Top 10</h2><span>Best candidates</span></div>
+            <div><h2>CSV/PDF</h2><span>Exports</span></div>
+            <div><h2>ZIP</h2><span>Sorted resumes</span></div>
+        </div>
+    </section>
+
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+
+    <section class="panel">
+        <form method="POST" enctype="multipart/form-data" id="rankForm">
+            <label>Job Description</label>
+            <textarea name="jd_text" required placeholder="Paste or write full job description here..."></textarea>
+
+            <label>Upload Resumes</label>
+            <input type="file" name="resumes" accept=".pdf,.docx,.txt" multiple required>
+            <p class="hint">You can select multiple resumes at once. Browser folder upload is limited, so open folder → Ctrl + A → Open.</p>
+
+            <div class="progress-wrap" id="progressWrap">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <p class="processing" id="processingText">Ranking resumes... please wait</p>
+
+            <button type="submit">Start AI Ranking</button>
+        </form>
+    </section>
+</div>
+
+<script>
+const form = document.getElementById("rankForm");
+const wrap = document.getElementById("progressWrap");
+const bar = document.getElementById("progressBar");
+const text = document.getElementById("processingText");
+
+form.addEventListener("submit", () => {
+    wrap.style.display = "block";
+    text.style.display = "block";
+    let w = 0;
+    setInterval(() => {
+        if (w < 94) {
+            w += 2;
+            bar.style.width = w + "%";
+        }
+    }, 250);
+});
+</script>
+</body>
+</html>

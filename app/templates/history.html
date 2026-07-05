@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ranking History</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="page">
+    <nav class="navbar">
+        <div class="brand">AI Resume Ranking Engine</div>
+        <div class="nav-links">
+            <a href="/">Dashboard</a>
+            <a href="/history">History</a>
+        </div>
+    </nav>
+
+    <section class="result-head">
+        <div>
+            <p class="tag">Saved Runs</p>
+            <h1>Ranking History</h1>
+        </div>
+        <form method="POST" action="/history/clear">
+            <button class="danger" type="submit">Clear All History</button>
+        </form>
+    </section>
+
+    <section class="panel">
+        <div class="table-wrap">
+            <table>
+                <tr>
+                    <th>ID</th>
+                    <th>Job</th>
+                    <th>Total</th>
+                    <th>Top Candidate</th>
+                    <th>Top Score</th>
+                    <th>Created</th>
+                    <th>Delete</th>
+                </tr>
+                {% for row in rows %}
+                <tr>
+                    <td>{{ row.id }}</td>
+                    <td>{{ row.job_title }}</td>
+                    <td>{{ row.total_resumes }}</td>
+                    <td>{{ row.top_candidate }}</td>
+                    <td>{{ row.top_score }}</td>
+                    <td>{{ row.created_at }}</td>
+                    <td>
+                        <form method="POST" action="/history/delete/{{ row.id }}">
+                            <button class="danger small" type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </section>
+</div>
+</body>
+</html>
