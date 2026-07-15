@@ -1,4 +1,4 @@
-# AI Resume–Job Semantic Ranking Engine V2
+# AI Resume–Job Semantic Ranking Engine
 
 Final deploy-ready Deep Learning version.
 
